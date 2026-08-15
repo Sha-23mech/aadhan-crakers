@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AADHAN FIRE WORKS - Order Management & Product Catalog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="bg-effects">
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+    <div class="glow glow-3"></div>
+  </div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="logo-icon">
+          <i class="fa-solid fa-fireworks"></i>
+        </div>
+        <div>
+          <h1>AADHAN FIRE WORKS</h1>
+          <p class="subtitle">Premium Fireworks & Sparklers Factory Catalog & Order Dashboard</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="/api/download-excel" class="btn btn-excel" id="btnDownloadExcel">
+          <i class="fa-solid fa-file-excel"></i> Download Excel Workbook
+        </a>
+      </div>
+    </header>
+
+    <!-- Metrics Bar -->
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-icon gold"><i class="fa-solid fa-cart-shopping"></i></div>
+        <div class="metric-info">
+          <span class="metric-label">Total Orders Placed</span>
+          <h2 id="metricTotalOrders" class="metric-value">0</h2>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon green"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+        <div class="metric-info">
+          <span class="metric-label">Total Revenue Saved to Excel</span>
+          <h2 id="metricTotalRevenue" class="metric-value">₹0.00</h2>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon purple"><i class="fa-solid fa-boxes-stacked"></i></div>
+        <div class="metric-info">
+          <span class="metric-label">Catalog Products</span>
+          <h2 id="metricCatalogCount" class="metric-value">144</h2>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon red"><i class="fa-solid fa-layer-group"></i></div>
+        <div class="metric-info">
+          <span class="metric-label">Categories Available</span>
+          <h2 id="metricCategoryCount" class="metric-value">23</h2>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Workspace Grid -->
+    <div class="main-layout">
+
+      <!-- Left Column: New Order Form -->
+      <section class="card form-card">
+        <div class="card-header">
+          <div class="card-title">
+            <i class="fa-solid fa-cash-register header-icon"></i>
+            <div>
+              <h3>Place New Order</h3>
+              <p>Enter buyer details & select firecracker items to record order into Excel sheet</p>
+            </div>
+          </div>
+        </div>
+
+        <form id="orderForm" class="order-form">
+          
+          <!-- Buyer Info Section -->
+          <div class="form-section">
+            <h4 class="section-title"><i class="fa-solid fa-user"></i> Buyer Information</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="buyerName">Buyer Name <span class="required">*</span></label>
+                <div class="input-wrapper">
+                  <i class="fa-solid fa-user-pen field-icon"></i>
+                  <input type="text" id="buyerName" placeholder="e.g. Rajesh Kumar" required autocomplete="off">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="contactNumber">Contact Number <span class="required">*</span></label>
+                <div class="input-wrapper">
+                  <i class="fa-solid fa-phone field-icon"></i>
+                  <input type="tel" id="contactNumber" placeholder="e.g. 9876543210" required autocomplete="off">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product Selection Section -->
+          <div class="form-section">
+            <h4 class="section-title"><i class="fa-solid fa-fire"></i> Cracker Selection</h4>
+            
+            <div class="form-row">
+              <!-- Dropdown 1: Category -->
+              <div class="form-group">
+                <label for="categorySelect">Select Cracker Category <span class="required">*</span></label>
+                <div class="input-wrapper">
+                  <i class="fa-solid fa-list-check field-icon"></i>
+                  <select id="categorySelect" required>
+                    <option value="">-- Choose Category --</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Dropdown 2: Specific Cracker -->
+              <div class="form-group">
+                <label for="crackerSelect">Select Specific Cracker <span class="required">*</span></label>
+                <div class="input-wrapper">
+                  <i class="fa-solid fa-burst field-icon"></i>
+                  <select id="crackerSelect" required disabled>
+                    <option value="">-- Select Category First --</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Product Specs & Rate Preview with Big Carton Box Image -->
+            <div class="product-preview-box" id="productPreviewBox" style="display: none;">
+              <div class="preview-content-grid">
+                <div class="preview-img-wrapper">
+                  <img id="previewImage" src="" alt="Carton Box Preview" class="carton-box-img">
+                </div>
+                <div class="preview-info">
+                  <div class="preview-tag"><span id="previewFactory">AADHAN FIRE WORKS</span></div>
+                  <div class="preview-details">
+                    <div class="detail-item">
+                      <span class="detail-label">Unit Price:</span>
+                      <span class="detail-val price-highlight" id="previewUnitPrice">₹0.00</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Per Unit:</span>
+                      <span class="detail-val" id="previewPerUnit">-</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Case Content:</span>
+                      <span class="detail-val" id="previewCaseContent">-</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quantity & Subtotal calculation -->
+            <div class="form-row quantity-row">
+              <div class="form-group">
+                <label for="quantityInput">Quantity <span class="required">*</span></label>
+                <div class="quantity-control">
+                  <button type="button" class="btn-qty" id="btnQtyMinus"><i class="fa-solid fa-minus"></i></button>
+                  <input type="number" id="quantityInput" value="1" min="1" max="9999" required>
+                  <button type="button" class="btn-qty" id="btnQtyPlus"><i class="fa-solid fa-plus"></i></button>
+                </div>
+              </div>
+
+              <div class="form-group subtotal-group">
+                <label>Current Selection Total</label>
+                <div class="selection-total-badge">
+                  <span id="currentSelectionTotal">₹0.00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add to Cart / Draft Button -->
+            <div class="cart-action-bar">
+              <button type="button" id="btnAddItem" class="btn btn-secondary">
+                <i class="fa-solid fa-plus"></i> Add Item to Order Draft
+              </button>
+            </div>
+          </div>
+
+          <!-- Order Summary / Draft List -->
+          <div class="order-summary-box" id="orderSummaryBox">
+            <div class="summary-header">
+              <h4><i class="fa-solid fa-receipt"></i> Order Draft Items</h4>
+              <button type="button" class="btn-text" id="btnClearDraft" style="display:none;">Clear All</button>
+            </div>
+            
+            <div class="draft-items-list" id="draftItemsList">
+              <div class="empty-draft-msg">
+                <i class="fa-solid fa-basket-shopping"></i> Select a cracker above or click any product card on the right to add items to your order.
+              </div>
+            </div>
+
+            <!-- Grand Total Bar -->
+            <div class="grand-total-container">
+              <div class="grand-total-label">
+                <span>Grand Total Value</span>
+                <small>Calculated automatically from selections</small>
+              </div>
+              <div class="grand-total-amount" id="displayGrandTotal">₹0.00</div>
+            </div>
+          </div>
+
+          <!-- Final Place Order Button -->
+          <div class="form-actions">
+            <button type="submit" id="btnPlaceOrder" class="btn btn-primary btn-large">
+              <i class="fa-solid fa-paper-plane"></i> Place Order & Save to Excel Sheet
+            </button>
+          </div>
+
+        </form>
+      </section>
+
+      <!-- Right Column: Product Catalog in Card Format with Big Thumbnail Images -->
+      <section class="card catalog-card-section">
+        <div class="card-header catalog-header-flex">
+          <div class="card-title">
+            <i class="fa-solid fa-boxes-packing header-icon blue-icon"></i>
+            <div>
+              <h3>AADHAN FIRE WORKS Product Catalog</h3>
+              <p>Browse all 144 firecracker items with big carton box thumbnail images</p>
+            </div>
+          </div>
+          
+          <div class="catalog-filters">
+            <div class="table-search">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="catalogSearchInput" placeholder="Search firecrackers...">
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Pills Filter Bar -->
+        <div class="category-pills-bar" id="categoryPillsBar">
+          <button class="pill-btn active" data-category="ALL">All Categories</button>
+        </div>
+
+        <!-- Product Cards Grid with Big Thumbnails -->
+        <div class="product-cards-grid" id="productCardsGrid">
+          <div class="loading-cards">
+            <i class="fa-solid fa-spinner fa-spin"></i> Loading product cards...
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
