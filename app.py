@@ -2,7 +2,7 @@ import os
 import openpyxl
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from datetime import datetime
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -15,6 +15,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PRIMARY_EXCEL_PATH = os.path.join(BASE_DIR, "Firecrackers_Catalog_and_Orders.xlsx")
 UPDATED_EXCEL_PATH = os.path.join(BASE_DIR, "Firecrackers_Catalog_and_Orders_Updated.xlsx")
 STATIC_IMG_DIR = os.path.join(BASE_DIR, "static", "images")
+
+# Admin Owner Credentials
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "aadhan@2026")
 
 def get_active_excel_path():
     if os.path.exists(UPDATED_EXCEL_PATH):
@@ -39,6 +43,10 @@ class OrderCreateRequest(BaseModel):
     unit_price: Optional[float] = None
     quantity: Optional[int] = None
     items: Optional[List[OrderItem]] = None
+
+class AdminAuthRequest(BaseModel):
+    username: str
+    password: str
 
 def get_image_url(category_name):
     safe_name = category_name.lower().replace(' ', '_').replace('"', '').replace('/', '_') + ".png"
@@ -85,45 +93,11 @@ def get_catalog():
         "products": products
     }
 
-@app.get("/api/orders")
-def get_orders():
-    excel_path = get_active_excel_path()
-    if not os.path.exists(excel_path):
-        return {"orders": [], "total_revenue": 0.0, "total_orders": 0}
-    wb = openpyxl.load_workbook(excel_path, read_only=True)
-    if "Order Details" not in wb.sheetnames:
-        wb.close()
-        return {"orders": [], "total_revenue": 0.0, "total_orders": 0}
-    
-    ws = wb["Order Details"]
-    orders = []
-    total_rev = 0.0
-    
-    for row in ws.iter_rows(min_row=2, values_only=True):
-        if not row or not row[0]:
-            continue
-        order_id, date_time, buyer, contact, cat, cracker, u_price, qty, total = row[:9]
-        tot_val = float(total or 0.0)
-        total_rev += tot_val
-        orders.append({
-            "order_id": str(order_id),
-            "date_time": str(date_time),
-            "buyer_name": str(buyer),
-            "contact_number": str(contact),
-            "category": str(cat),
-            "cracker_name": str(cracker),
-            "unit_price": float(u_price or 0.0),
-            "quantity": int(qty or 1),
-            "total_amount": tot_val,
-            "image_url": get_image_url(str(cat))
-        })
-    wb.close()
-        
-    return {
-        "orders": orders[::-1],
-        "total_revenue": total_rev,
-        "total_orders": len(orders)
-    }
+@app.post("/api/admin/verify")
+def verify_admin(req: AdminAuthRequest):
+    if req.username == ADMIN_USERNAME and req.password == ADMIN_PASSWORD:
+        return {"success": True, "token": ADMIN_PASSWORD}
+    raise HTTPException(status_code=401, detail="Invalid Owner Credentials!")
 
 @app.post("/api/orders")
 def place_order(req: OrderCreateRequest):
@@ -223,7 +197,10 @@ def place_order(req: OrderCreateRequest):
     }
 
 @app.get("/api/download-excel")
-def download_excel():
+def download_excel(key: Optional[str] = Query(None)):
+    if key != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Unauthorized. Owner login required to download Excel.")
+
     excel_path = get_active_excel_path()
     if not os.path.exists(excel_path):
         generate_excel.extract_and_generate()

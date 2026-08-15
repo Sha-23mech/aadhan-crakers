@@ -1,5 +1,4 @@
 let catalogData = { categories: [], products: [] };
-let ordersData = [];
 let draftItems = [];
 let selectedProduct = null;
 let activeCategoryFilter = 'ALL';
@@ -32,16 +31,23 @@ const catalogSearchInput = document.getElementById('catalogSearchInput');
 const categoryPillsBar = document.getElementById('categoryPillsBar');
 const productCardsGrid = document.getElementById('productCardsGrid');
 
-const metricTotalOrders = document.getElementById('metricTotalOrders');
-const metricTotalRevenue = document.getElementById('metricTotalRevenue');
 const metricCatalogCount = document.getElementById('metricCatalogCount');
 const metricCategoryCount = document.getElementById('metricCategoryCount');
+
+// Admin Modal Elements
+const btnAdminDownload = document.getElementById('btnAdminDownload');
+const adminModal = document.getElementById('adminModal');
+const btnCloseAdminModal = document.getElementById('btnCloseAdminModal');
+const btnCancelAdmin = document.getElementById('btnCancelAdmin');
+const adminLoginForm = document.getElementById('adminLoginForm');
+const adminUsernameInput = document.getElementById('adminUsername');
+const adminPasswordInput = document.getElementById('adminPassword');
 
 // Initialize Dashboard
 document.addEventListener('DOMContentLoaded', () => {
   fetchCatalog();
-  fetchOrders();
   setupEventListeners();
+  setupAdminModal();
 });
 
 function setupEventListeners() {
@@ -67,6 +73,54 @@ function setupEventListeners() {
   orderForm.addEventListener('submit', handlePlaceOrder);
 
   catalogSearchInput.addEventListener('input', filterCatalogCards);
+}
+
+// Setup Owner Admin Login Modal
+function setupAdminModal() {
+  btnAdminDownload.addEventListener('click', () => {
+    adminUsernameInput.value = '';
+    adminPasswordInput.value = '';
+    adminModal.style.display = 'flex';
+  });
+
+  btnCloseAdminModal.addEventListener('click', () => {
+    adminModal.style.display = 'none';
+  });
+
+  btnCancelAdmin.addEventListener('click', () => {
+    adminModal.style.display = 'none';
+  });
+
+  adminModal.addEventListener('click', (e) => {
+    if (e.target === adminModal) {
+      adminModal.style.display = 'none';
+    }
+  });
+
+  adminLoginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const user = adminUsernameInput.value.trim();
+    const pass = adminPasswordInput.value.trim();
+
+    try {
+      const res = await fetch('/api/admin/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, password: pass })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        showToast('Owner Verified! Downloading Excel Workbook...', 'success');
+        adminModal.style.display = 'none';
+        window.location.href = `/api/download-excel?key=${encodeURIComponent(data.token)}`;
+      } else {
+        showToast('Invalid Owner Credentials!', 'error');
+      }
+    } catch (err) {
+      showToast('Error verifying credentials', 'error');
+    }
+  });
 }
 
 // Fetch Catalog Data
@@ -204,7 +258,7 @@ function renderProductCards(products) {
   if (products.length === 0) {
     productCardsGrid.innerHTML = `
       <div class="loading-cards">
-        <i class="fa-solid fa-box-open"></i> No firecracker products found matching your filter.
+        <i class="fa-solid fa-box-open"></i> No firecrackers found matching your filter.
       </div>
     `;
     return;
@@ -294,7 +348,7 @@ function renderDraftList() {
   if (draftItems.length === 0) {
     draftItemsList.innerHTML = `
       <div class="empty-draft-msg">
-        <i class="fa-solid fa-basket-shopping"></i> Select a cracker above or click any product card on the right to add items to your order.
+        <i class="fa-solid fa-basket-shopping"></i> Select a cracker above or tap any product card below to add items.
       </div>
     `;
     btnClearDraft.style.display = 'none';
@@ -387,7 +441,7 @@ async function handlePlaceOrder(e) {
 
     const data = await res.json();
     if (res.ok && data.success) {
-      showToast(`Success! Order saved to Excel (Total: ₹${data.grand_total.toFixed(2)})`, 'success');
+      showToast(`Success! Order recorded in Excel (Total: ₹${data.grand_total.toFixed(2)})`, 'success');
       
       // Reset form & draft
       draftItems = [];
@@ -396,9 +450,6 @@ async function handlePlaceOrder(e) {
       onCategoryChange();
       buyerNameInput.value = '';
       contactNumberInput.value = '';
-      
-      // Refresh Orders metrics
-      fetchOrders();
     } else {
       showToast(data.detail || 'Error placing order', 'error');
     }
@@ -406,21 +457,7 @@ async function handlePlaceOrder(e) {
     showToast('Network error while placing order', 'error');
   } finally {
     btnPlaceOrder.disabled = false;
-    btnPlaceOrder.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Place Order & Save to Excel Sheet';
-  }
-}
-
-// Fetch Orders Metrics from Excel Backend
-async function fetchOrders() {
-  try {
-    const res = await fetch('/api/orders');
-    const data = await res.json();
-    ordersData = data.orders || [];
-
-    metricTotalOrders.textContent = data.total_orders;
-    metricTotalRevenue.textContent = `₹${data.total_revenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-  } catch (err) {
-    console.error('Error fetching orders:', err);
+    btnPlaceOrder.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Place Order & Save to Excel';
   }
 }
 

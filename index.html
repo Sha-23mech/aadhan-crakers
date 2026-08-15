@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AADHAN FIRE WORKS - Order Management & Product Catalog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AADHAN FIRE WORKS - Mobile & Web Order Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
@@ -26,34 +26,18 @@
         </div>
         <div>
           <h1>AADHAN FIRE WORKS</h1>
-          <p class="subtitle">Premium Fireworks & Sparklers Factory Catalog & Order Dashboard</p>
+          <p class="subtitle">Premium Fireworks & Sparklers Order Dashboard</p>
         </div>
       </div>
       <div class="header-actions">
-        <a href="/api/download-excel" class="btn btn-excel" id="btnDownloadExcel">
-          <i class="fa-solid fa-file-excel"></i> Download Excel Workbook
-        </a>
+        <button type="button" class="btn btn-excel" id="btnAdminDownload">
+          <i class="fa-solid fa-lock"></i> Owner Excel Download
+        </button>
       </div>
     </header>
 
-    <!-- Metrics Bar -->
+    <!-- Metrics Bar (Cleaned - Only Catalog & Category Count) -->
     <section class="metrics-grid">
-      <div class="metric-card">
-        <div class="metric-icon gold"><i class="fa-solid fa-cart-shopping"></i></div>
-        <div class="metric-info">
-          <span class="metric-label">Total Orders Placed</span>
-          <h2 id="metricTotalOrders" class="metric-value">0</h2>
-        </div>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-icon green"><i class="fa-solid fa-indian-rupee-sign"></i></div>
-        <div class="metric-info">
-          <span class="metric-label">Total Revenue Saved to Excel</span>
-          <h2 id="metricTotalRevenue" class="metric-value">₹0.00</h2>
-        </div>
-      </div>
-
       <div class="metric-card">
         <div class="metric-icon purple"><i class="fa-solid fa-boxes-stacked"></i></div>
         <div class="metric-info">
@@ -81,7 +65,7 @@
             <i class="fa-solid fa-cash-register header-icon"></i>
             <div>
               <h3>Place New Order</h3>
-              <p>Enter buyer details & select firecracker items to record order into Excel sheet</p>
+              <p>Enter buyer details & select firecrackers to record your order</p>
             </div>
           </div>
         </div>
@@ -200,7 +184,7 @@
             
             <div class="draft-items-list" id="draftItemsList">
               <div class="empty-draft-msg">
-                <i class="fa-solid fa-basket-shopping"></i> Select a cracker above or click any product card on the right to add items to your order.
+                <i class="fa-solid fa-basket-shopping"></i> Select a cracker above or tap any product card below to add items.
               </div>
             </div>
 
@@ -217,21 +201,21 @@
           <!-- Final Place Order Button -->
           <div class="form-actions">
             <button type="submit" id="btnPlaceOrder" class="btn btn-primary btn-large">
-              <i class="fa-solid fa-paper-plane"></i> Place Order & Save to Excel Sheet
+              <i class="fa-solid fa-paper-plane"></i> Place Order & Save to Excel
             </button>
           </div>
 
         </form>
       </section>
 
-      <!-- Right Column: Product Catalog in Card Format with Big Thumbnail Images -->
+      <!-- Right Column: Product Catalog Card Format with Big Thumbnail Images -->
       <section class="card catalog-card-section">
         <div class="card-header catalog-header-flex">
           <div class="card-title">
             <i class="fa-solid fa-boxes-packing header-icon blue-icon"></i>
             <div>
-              <h3>AADHAN FIRE WORKS Product Catalog</h3>
-              <p>Browse all 144 firecracker items with big carton box thumbnail images</p>
+              <h3>AADHAN FIRE WORKS Catalog</h3>
+              <p>Tap any card to order item</p>
             </div>
           </div>
           
@@ -243,7 +227,7 @@
           </div>
         </div>
 
-        <!-- Category Pills Filter Bar -->
+        <!-- Category Pills Filter Bar (Mobile Touch Scrollable) -->
         <div class="category-pills-bar" id="categoryPillsBar">
           <button class="pill-btn active" data-category="ALL">All Categories</button>
         </div>
@@ -256,6 +240,47 @@
         </div>
       </section>
 
+    </div>
+  </div>
+
+  <!-- Admin Owner Login Modal -->
+  <div id="adminModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-user-shield modal-icon"></i>
+          <div>
+            <h3>Owner Credentials Required</h3>
+            <p>Enter owner login to download the Excel Order Sheet</p>
+          </div>
+        </div>
+        <button type="button" class="btn-modal-close" id="btnCloseAdminModal">&times;</button>
+      </div>
+
+      <form id="adminLoginForm" class="modal-form">
+        <div class="form-group">
+          <label for="adminUsername">Owner Username</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-user field-icon"></i>
+            <input type="text" id="adminUsername" placeholder="Enter owner username" required autocomplete="off">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 12px;">
+          <label for="adminPassword">Owner Password</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-key field-icon"></i>
+            <input type="password" id="adminPassword" placeholder="Enter owner password" required autocomplete="off">
+          </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 20px;">
+          <button type="button" class="btn btn-secondary" id="btnCancelAdmin">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitAdminLogin">
+            <i class="fa-solid fa-download"></i> Verify & Download Excel
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
