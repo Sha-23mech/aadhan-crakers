@@ -31,8 +31,11 @@ const catalogSearchInput = document.getElementById('catalogSearchInput');
 const categoryPillsBar = document.getElementById('categoryPillsBar');
 const productCardsGrid = document.getElementById('productCardsGrid');
 
-const metricCatalogCount = document.getElementById('metricCatalogCount');
-const metricCategoryCount = document.getElementById('metricCategoryCount');
+// Sticky Mobile Cart Elements
+const stickyMobileCartBar = document.getElementById('stickyMobileCartBar');
+const mobileCartCount = document.getElementById('mobileCartCount');
+const mobileCartTotal = document.getElementById('mobileCartTotal');
+const btnMobileCheckout = document.getElementById('btnMobileCheckout');
 
 // Admin Modal Elements
 const btnAdminDownload = document.getElementById('btnAdminDownload');
@@ -43,7 +46,7 @@ const adminLoginForm = document.getElementById('adminLoginForm');
 const adminUsernameInput = document.getElementById('adminUsername');
 const adminPasswordInput = document.getElementById('adminPassword');
 
-// Initialize Dashboard
+// Initialize Mobile Website Dashboard
 document.addEventListener('DOMContentLoaded', () => {
   fetchCatalog();
   setupEventListeners();
@@ -73,6 +76,12 @@ function setupEventListeners() {
   orderForm.addEventListener('submit', handlePlaceOrder);
 
   catalogSearchInput.addEventListener('input', filterCatalogCards);
+
+  if (btnMobileCheckout) {
+    btnMobileCheckout.addEventListener('click', () => {
+      document.getElementById('orderCheckoutCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 }
 
 // Setup Owner Admin Login Modal
@@ -140,9 +149,6 @@ async function fetchCatalog() {
 
     // Populate Category Pills Bar
     renderCategoryPills(catalogData.categories);
-
-    metricCatalogCount.textContent = catalogData.products.length;
-    metricCategoryCount.textContent = catalogData.categories.length;
 
     renderProductCards(catalogData.products);
   } catch (err) {
@@ -249,8 +255,8 @@ function selectProductFromCard(itemId) {
   crackerSelect.value = item.item_id;
   onCrackerChange();
 
-  showToast(`Selected: ${item.name}`);
-  orderForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Auto add to draft for instant tap-to-add experience
+  addItemToDraft();
 }
 
 // Render Product Cards Grid with Thumbnail Images
@@ -277,13 +283,12 @@ function renderProductCards(products) {
       <div class="card-body">
         <h4 class="card-title">${p.name}</h4>
         <div class="card-meta">
-          <span><i class="fa-solid fa-box"></i> Per: ${p.per || '1 Unit'}</span>
-          <span><i class="fa-solid fa-cubes"></i> Case: ${p.case_content || '-'}</span>
+          <span><i class="fa-solid fa-box"></i> ${p.per || '1 Unit'}</span>
         </div>
         <div class="card-price-row">
           <span class="card-price-tag">₹${p.price.toFixed(2)}</span>
           <button type="button" class="btn-card-select" onclick="selectProductFromCard('${p.item_id}')">
-            <i class="fa-solid fa-cart-plus"></i> Select Item
+            <i class="fa-solid fa-plus"></i> Add
           </button>
         </div>
       </div>
@@ -316,7 +321,7 @@ function filterCatalogCards() {
 // Add Item to Order Draft List
 function addItemToDraft() {
   if (!selectedProduct) {
-    showToast('Please select a cracker category and item first', 'error');
+    showToast('Please select a cracker first', 'error');
     return;
   }
   const qty = parseInt(quantityInput.value) || 0;
@@ -335,9 +340,9 @@ function addItemToDraft() {
   });
 
   renderDraftList();
-  showToast(`Added ${selectedProduct.name} (x${qty}) to draft`);
+  showToast(`Added ${selectedProduct.name} (x${qty}) to order`);
   
-  // Reset cracker dropdown
+  // Reset cracker selection
   crackerSelect.value = '';
   onCrackerChange();
   quantityInput.value = 1;
@@ -348,7 +353,7 @@ function renderDraftList() {
   if (draftItems.length === 0) {
     draftItemsList.innerHTML = `
       <div class="empty-draft-msg">
-        <i class="fa-solid fa-basket-shopping"></i> Select a cracker above or tap any product card below to add items.
+        <i class="fa-solid fa-basket-shopping"></i> Tap any cracker card above to add items to your order.
       </div>
     `;
     btnClearDraft.style.display = 'none';
@@ -387,13 +392,29 @@ function clearDraft() {
 
 function updateGrandTotal() {
   let total = 0;
+  let count = 0;
   if (draftItems.length > 0) {
     total = draftItems.reduce((acc, i) => acc + i.subtotal, 0);
+    count = draftItems.reduce((acc, i) => acc + i.quantity, 0);
   } else if (selectedProduct) {
     const qty = parseInt(quantityInput.value) || 0;
     total = selectedProduct.price * qty;
+    count = qty;
   }
-  displayGrandTotal.textContent = `₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+  
+  const formattedTotal = `₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+  displayGrandTotal.textContent = formattedTotal;
+
+  // Update Sticky Mobile Floating Cart Bar
+  if (stickyMobileCartBar) {
+    if (count > 0) {
+      mobileCartCount.textContent = `${count} ITEM${count > 1 ? 'S' : ''}`;
+      mobileCartTotal.textContent = formattedTotal;
+      stickyMobileCartBar.style.display = 'flex';
+    } else {
+      stickyMobileCartBar.style.display = 'none';
+    }
+  }
 }
 
 // Handle Order Submission to Server
