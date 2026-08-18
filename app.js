@@ -111,7 +111,7 @@ function setupAdminModal() {
 
       if (res.ok) {
         const data = await res.json();
-        showToast('Owner Verified! Downloading Excel Workbook...', 'success');
+        showToast('Owner Verified! Accessing Order Sheet...', 'success');
         adminModal.style.display = 'none';
         window.location.href = `/api/download-excel?key=${encodeURIComponent(data.token)}`;
       } else {
@@ -253,7 +253,7 @@ function selectProductFromCard(itemId) {
   orderForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// Render Product Cards Grid with Big Thumbnail Images
+// Render Product Cards Grid with Thumbnail Images
 function renderProductCards(products) {
   if (products.length === 0) {
     productCardsGrid.innerHTML = `
@@ -430,7 +430,7 @@ async function handlePlaceOrder(e) {
   }
 
   btnPlaceOrder.disabled = true;
-  btnPlaceOrder.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving to Excel...';
+  btnPlaceOrder.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Placing Order...';
 
   try {
     const res = await fetch('/api/orders', {
@@ -441,7 +441,7 @@ async function handlePlaceOrder(e) {
 
     const data = await res.json();
     if (res.ok && data.success) {
-      showToast(`Success! Order recorded in Excel (Total: ₹${data.grand_total.toFixed(2)})`, 'success');
+      showToast(`Order Placed Successfully! (Total: ₹${data.grand_total.toFixed(2)})`, 'success');
       
       // Reset form & draft
       draftItems = [];
@@ -457,7 +457,7 @@ async function handlePlaceOrder(e) {
     showToast('Network error while placing order', 'error');
   } finally {
     btnPlaceOrder.disabled = false;
-    btnPlaceOrder.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Place Order & Save to Excel';
+    btnPlaceOrder.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Place Order';
   }
 }
 
