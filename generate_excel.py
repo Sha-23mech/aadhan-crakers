@@ -10,7 +10,15 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 pdf1_path = os.path.join(BASE_DIR, "SRI NARAYANA SPARKLERS FACTORY PRICELIST (1).pdf")
 pdf2_path = os.path.join(BASE_DIR, "SRI NARAYANA SPARKLERS FACTORY PRICELIST (2).pdf")
 excel_path = os.path.join(BASE_DIR, "Firecrackers_Catalog_and_Orders.xlsx")
-STATIC_IMG_DIR = os.path.join(BASE_DIR, "assets", "images")
+STATIC_IMG_DIR = os.path.join(BASE_DIR, "static", "images")
+
+def normalize_category(cat_name):
+    c = cat_name.strip()
+    if c.lower() in ["31/2\"pipe", "3 1/2\"pipe", "3 1/2 pipe", "31/2 pipe"]:
+        return '3 1/2" Pipe'
+    if c.lower() in ["11/2\"pipe", "1 1/2\"pipe", "1 1/2 pipe", "11/2 pipe"]:
+        return '1 1/2" Pipe'
+    return c.title() if not any(x in c for x in ['"', '1/2', 'Cm', 'Pcs']) else c
 
 def extract_and_generate(target_path=excel_path):
     items = []
@@ -28,7 +36,7 @@ def extract_and_generate(target_path=excel_path):
                         if row[0] == 'S.NO' or 'PARTICULARS' in str(row[1]):
                             continue
                         if row[0] and row[1] is None and row[2] is None:
-                            current_category = row[0].strip().title()
+                            current_category = normalize_category(row[0])
                             continue
                         if len(row) >= 5 and row[0] and row[0].isdigit():
                             name = row[1].strip() if row[1] else ""
@@ -37,7 +45,7 @@ def extract_and_generate(target_path=excel_path):
                             case_content = row[4].strip() if row[4] else ""
                             items.append({
                                 "factory": "AADHAN FIRE WORKS",
-                                "category": current_category,
+                                "category": normalize_category(current_category),
                                 "name": name,
                                 "rate": rate,
                                 "per": per,
@@ -59,7 +67,7 @@ def extract_and_generate(target_path=excel_path):
                         if row[0] and (row[1] is None or str(row[1]).strip() == '') and row[2] is None:
                             cat_name = row[0].strip()
                             if cat_name.lower() not in ['1 | p age', '2 | p age', '3 | p age', '4 | p age']:
-                                current_category = cat_name.title()
+                                current_category = normalize_category(cat_name)
                             continue
                         if len(row) >= 4 and row[1] and str(row[1]).replace('.', '', 1).isdigit():
                             name = row[0].strip() if row[0] else ""
@@ -70,7 +78,7 @@ def extract_and_generate(target_path=excel_path):
                             case_content = row[3].strip() if row[3] else ""
                             items.append({
                                 "factory": "AADHAN FIRE WORKS",
-                                "category": current_category,
+                                "category": normalize_category(current_category),
                                 "name": name,
                                 "rate": price_val,
                                 "per": per,
@@ -132,8 +140,9 @@ def extract_and_generate(target_path=excel_path):
         # Embed Carton Box image
         safe_img_name = item["category"].lower().replace(' ', '_').replace('"', '').replace('/', '_') + ".png"
         img_path = os.path.join(STATIC_IMG_DIR, safe_img_name)
-        if not os.path.exists(img_path):
-            img_path = os.path.join(BASE_DIR, "static", "images", safe_img_name)
+        if not os.path.exists(img_path) and "3_1_2" in safe_img_name:
+            img_path = os.path.join(STATIC_IMG_DIR, "3_1_2_pipe.png")
+
         if os.path.exists(img_path):
             try:
                 xl_img = OpenPyXLImage(img_path)

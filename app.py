@@ -9,12 +9,12 @@ from pydantic import BaseModel
 from typing import List, Optional
 import generate_excel
 
-app = FastAPI(title="AADHAN FIRE WORKS - Order Management & Product Catalog")
+app = FastAPI(title="AADHAN FIRE WORKS - Order Dashboard")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PRIMARY_EXCEL_PATH = os.path.join(BASE_DIR, "Firecrackers_Catalog_and_Orders.xlsx")
 UPDATED_EXCEL_PATH = os.path.join(BASE_DIR, "Firecrackers_Catalog_and_Orders_Updated.xlsx")
-STATIC_IMG_DIR = os.path.join(BASE_DIR, "assets", "images")
+STATIC_IMG_DIR = os.path.join(BASE_DIR, "static", "images")
 
 # Admin Owner Credentials
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
@@ -49,13 +49,29 @@ class AdminAuthRequest(BaseModel):
     password: str
 
 def get_image_url(category_name):
-    safe_name = category_name.lower().replace(' ', '_').replace('"', '').replace('/', '_') + ".png"
+    cat_clean = str(category_name).strip()
+    
+    # Category normalization mappings
+    if "31/2" in cat_clean or "3 1/2" in cat_clean:
+        return "/static/images/3_1_2_pipe.png"
+    if "11/2" in cat_clean or "1 1/2" in cat_clean:
+        return "/static/images/1_1_2_pipe.png"
+    if "2\"" in cat_clean or "2 pipe" in cat_clean.lower():
+        return "/static/images/2_pipe.png"
+    if "3\"" in cat_clean or "3 pipe" in cat_clean.lower():
+        return "/static/images/3_pipe.png"
+    if "4\"" in cat_clean or "4 pipe" in cat_clean.lower():
+        return "/static/images/4_pipe.png"
+
+    safe_name = cat_clean.lower().replace(' ', '_').replace('"', '').replace('/', '_') + ".png"
     img_path = os.path.join(STATIC_IMG_DIR, safe_name)
     if os.path.exists(img_path):
-        return f"/assets/images/{safe_name}"
-    static_img_path = os.path.join(BASE_DIR, "static", "images", safe_name)
-    if os.path.exists(static_img_path):
         return f"/static/images/{safe_name}"
+
+    alt_name = cat_clean.lower().replace(' ', '').replace('"', '').replace('/', '_') + ".png"
+    if os.path.exists(os.path.join(STATIC_IMG_DIR, alt_name)):
+        return f"/static/images/{alt_name}"
+
     return "/static/images/7_cm_sparklers.png"
 
 @app.get("/api/catalog")
@@ -77,11 +93,11 @@ def get_catalog():
         if not row or not row[1]:
             continue
         box_photo, item_id, factory, category, name, rate, per, case_content = row[:8]
-        cat_clean = str(category).strip()
+        cat_clean = generate_excel.normalize_category(str(category))
         categories_set.add(cat_clean)
         products.append({
-            "item_id": item_id,
-            "factory": factory,
+            "item_id": str(item_id),
+            "factory": str(factory),
             "category": cat_clean,
             "name": str(name).strip(),
             "price": float(rate or 0.0),
@@ -202,7 +218,7 @@ def place_order(req: OrderCreateRequest):
 @app.get("/api/download-excel")
 def download_excel(key: Optional[str] = Query(None)):
     if key != ADMIN_PASSWORD:
-        raise HTTPException(status_code=401, detail="Unauthorized. Owner login required to download Excel.")
+        raise HTTPException(status_code=401, detail="Unauthorized. Owner login required.")
 
     excel_path = get_active_excel_path()
     if not os.path.exists(excel_path):
@@ -214,7 +230,6 @@ def download_excel(key: Optional[str] = Query(None)):
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
-app.mount("/assets", StaticFiles(directory=os.path.join(BASE_DIR, "assets")), name="assets")
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static_root")
 
