@@ -14,7 +14,7 @@ app = FastAPI(title="AADHAN FIRE WORKS - Order Management & Product Catalog")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PRIMARY_EXCEL_PATH = os.path.join(BASE_DIR, "Firecrackers_Catalog_and_Orders.xlsx")
 UPDATED_EXCEL_PATH = os.path.join(BASE_DIR, "Firecrackers_Catalog_and_Orders_Updated.xlsx")
-STATIC_IMG_DIR = os.path.join(BASE_DIR, "static", "images")
+STATIC_IMG_DIR = os.path.join(BASE_DIR, "assets", "images")
 
 # Admin Owner Credentials
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
@@ -52,6 +52,9 @@ def get_image_url(category_name):
     safe_name = category_name.lower().replace(' ', '_').replace('"', '').replace('/', '_') + ".png"
     img_path = os.path.join(STATIC_IMG_DIR, safe_name)
     if os.path.exists(img_path):
+        return f"/assets/images/{safe_name}"
+    static_img_path = os.path.join(BASE_DIR, "static", "images", safe_name)
+    if os.path.exists(static_img_path):
         return f"/static/images/{safe_name}"
     return "/static/images/7_cm_sparklers.png"
 
@@ -211,6 +214,7 @@ def download_excel(key: Optional[str] = Query(None)):
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
+app.mount("/assets", StaticFiles(directory=os.path.join(BASE_DIR, "assets")), name="assets")
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static_root")
 

@@ -10,7 +10,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 pdf1_path = os.path.join(BASE_DIR, "SRI NARAYANA SPARKLERS FACTORY PRICELIST (1).pdf")
 pdf2_path = os.path.join(BASE_DIR, "SRI NARAYANA SPARKLERS FACTORY PRICELIST (2).pdf")
 excel_path = os.path.join(BASE_DIR, "Firecrackers_Catalog_and_Orders.xlsx")
-STATIC_IMG_DIR = os.path.join(BASE_DIR, "static", "images")
+STATIC_IMG_DIR = os.path.join(BASE_DIR, "assets", "images")
 
 def extract_and_generate(target_path=excel_path):
     items = []
@@ -132,6 +132,8 @@ def extract_and_generate(target_path=excel_path):
         # Embed Carton Box image
         safe_img_name = item["category"].lower().replace(' ', '_').replace('"', '').replace('/', '_') + ".png"
         img_path = os.path.join(STATIC_IMG_DIR, safe_img_name)
+        if not os.path.exists(img_path):
+            img_path = os.path.join(BASE_DIR, "static", "images", safe_img_name)
         if os.path.exists(img_path):
             try:
                 xl_img = OpenPyXLImage(img_path)
