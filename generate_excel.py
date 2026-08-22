@@ -1,4 +1,6 @@
 import os
+import re
+import difflib
 import pdfplumber
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -11,6 +13,53 @@ pdf1_path = os.path.join(BASE_DIR, "SRI NARAYANA SPARKLERS FACTORY PRICELIST (1)
 pdf2_path = os.path.join(BASE_DIR, "SRI NARAYANA SPARKLERS FACTORY PRICELIST (2).pdf")
 excel_path = os.path.join(BASE_DIR, "Firecrackers_Catalog_and_Orders.xlsx")
 STATIC_IMG_DIR = os.path.join(BASE_DIR, "static", "images")
+
+def normalize_image_key(s: str) -> str:
+    s = str(s).lower()
+    s = s.replace('1/2', '12').replace('3/2', '32').replace('1 1/2', '112').replace('3 1/2', '312')
+    return re.sub(r'[^a-z0-9]', '', s)
+
+def find_category_image_path(category_name, static_dir=STATIC_IMG_DIR):
+    if not os.path.exists(static_dir):
+        return None
+
+    cat_clean = str(category_name).strip()
+    cat_norm = normalize_image_key(cat_clean)
+    
+    files = os.listdir(static_dir)
+    img_map = {}
+    for f in files:
+        base = os.path.splitext(f)[0]
+        norm = normalize_image_key(base)
+        img_map[norm] = f
+
+    if cat_norm in img_map:
+        return os.path.join(static_dir, img_map[cat_norm])
+
+    for norm, filename in img_map.items():
+        if len(norm) > 4 and (norm in cat_norm or cat_norm in norm):
+            return os.path.join(static_dir, filename)
+
+    num_cat = set(re.findall(r'\d+', cat_clean))
+    best_match = None
+    best_ratio = 0.0
+
+    for norm, filename in img_map.items():
+        num_img = set(re.findall(r'\d+', norm))
+        if num_cat or num_img:
+            if num_cat != num_img:
+                continue
+
+        ratio = difflib.SequenceMatcher(None, cat_norm, norm).ratio()
+        if ratio > best_ratio:
+            best_ratio = ratio
+            best_match = filename
+
+    if best_match and best_ratio > 0.4:
+        return os.path.join(static_dir, best_match)
+
+    fallback = os.path.join(static_dir, "7_cm_sparklers.png")
+    return fallback if os.path.exists(fallback) else None
 
 def normalize_category(cat_name):
     c = cat_name.strip()
@@ -138,12 +187,9 @@ def extract_and_generate(target_path=excel_path):
             cell.alignment = Alignment(vertical="center")
 
         # Embed Carton Box image
-        safe_img_name = item["category"].lower().replace(' ', '_').replace('"', '').replace('/', '_') + ".png"
-        img_path = os.path.join(STATIC_IMG_DIR, safe_img_name)
-        if not os.path.exists(img_path) and "3_1_2" in safe_img_name:
-            img_path = os.path.join(STATIC_IMG_DIR, "3_1_2_pipe.png")
+        img_path = find_category_image_path(item["category"])
 
-        if os.path.exists(img_path):
+        if img_path and os.path.exists(img_path):
             try:
                 xl_img = OpenPyXLImage(img_path)
                 xl_img.width = 45

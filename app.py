@@ -1,4 +1,6 @@
 import os
+import re
+import difflib
 import openpyxl
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from datetime import datetime
@@ -48,29 +50,52 @@ class AdminAuthRequest(BaseModel):
     username: str
     password: str
 
+def normalize_image_key(s: str) -> str:
+    s = str(s).lower()
+    s = s.replace('1/2', '12').replace('3/2', '32').replace('1 1/2', '112').replace('3 1/2', '312')
+    return re.sub(r'[^a-z0-9]', '', s)
+
 def get_image_url(category_name):
+    if not os.path.exists(STATIC_IMG_DIR):
+        return "/static/images/7_cm_sparklers.png"
+
     cat_clean = str(category_name).strip()
+    cat_norm = normalize_image_key(cat_clean)
     
-    # Category normalization mappings
-    if "31/2" in cat_clean or "3 1/2" in cat_clean:
-        return "/static/images/3_1_2_pipe.png"
-    if "11/2" in cat_clean or "1 1/2" in cat_clean:
-        return "/static/images/1_1_2_pipe.png"
-    if "2\"" in cat_clean or "2 pipe" in cat_clean.lower():
-        return "/static/images/2_pipe.png"
-    if "3\"" in cat_clean or "3 pipe" in cat_clean.lower():
-        return "/static/images/3_pipe.png"
-    if "4\"" in cat_clean or "4 pipe" in cat_clean.lower():
-        return "/static/images/4_pipe.png"
+    files = os.listdir(STATIC_IMG_DIR)
+    img_map = {}
+    for f in files:
+        base = os.path.splitext(f)[0]
+        norm = normalize_image_key(base)
+        img_map[norm] = f
 
-    safe_name = cat_clean.lower().replace(' ', '_').replace('"', '').replace('/', '_') + ".png"
-    img_path = os.path.join(STATIC_IMG_DIR, safe_name)
-    if os.path.exists(img_path):
-        return f"/static/images/{safe_name}"
+    # 1. Exact normalized match
+    if cat_norm in img_map:
+        return f"/static/images/{img_map[cat_norm]}"
 
-    alt_name = cat_clean.lower().replace(' ', '').replace('"', '').replace('/', '_') + ".png"
-    if os.path.exists(os.path.join(STATIC_IMG_DIR, alt_name)):
-        return f"/static/images/{alt_name}"
+    # 2. Substring match where norm is in cat_norm or cat_norm is in norm
+    for norm, filename in img_map.items():
+        if len(norm) > 4 and (norm in cat_norm or cat_norm in norm):
+            return f"/static/images/{filename}"
+
+    # 3. Fuzzy similarity matching with numeric constraint
+    num_cat = set(re.findall(r'\d+', cat_clean))
+    best_match = None
+    best_ratio = 0.0
+
+    for norm, filename in img_map.items():
+        num_img = set(re.findall(r'\d+', norm))
+        if num_cat or num_img:
+            if num_cat != num_img:
+                continue
+
+        ratio = difflib.SequenceMatcher(None, cat_norm, norm).ratio()
+        if ratio > best_ratio:
+            best_ratio = ratio
+            best_match = filename
+
+    if best_match and best_ratio > 0.4:
+        return f"/static/images/{best_match}"
 
     return "/static/images/7_cm_sparklers.png"
 
